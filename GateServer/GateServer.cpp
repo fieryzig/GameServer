@@ -62,7 +62,8 @@ void GateServer::Dispatch(Client* cli, PacketInfo *ppi, string content) {
                 Logics[pi.svrid]->Send(pi,"Login");
 		    }
 		    else {
-                Logics[ppi->svrid]->Send(pi,content);
+                cout << "DEBUG: send to logic: " << content << endl;
+                Logics[ppi->svrid]->Send(*ppi,content);
                 if (content == "Logout") {
                     Clients.erase(cli);
                     close(cli->fd);
@@ -171,6 +172,7 @@ void GateServer::acceptConnect()
     int port = clientaddr.sin_port;
     if (find(logic_ip.begin(), logic_ip.end(), make_pair(ip,port)) == logic_ip.end()) {
         Clients.insert(client);
+        cout << "A Client has connected!" << endl;
     }
     else {
         cout << "Logic connected,";

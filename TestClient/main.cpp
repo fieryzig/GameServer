@@ -16,25 +16,44 @@
 #include <string>
 
 #include <iostream>
+#include <thread>
 
 using namespace std;
 
 using namespace fieryzig;
 
-int main()
-{
-    int fd;
-    struct sockaddr_in addr;
+int fd;
+struct sockaddr_in addr;
+Client *client = nullptr;
 
+void init()
+{
     fd = socket(AF_INET, SOCK_STREAM, 0);
-    
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     inet_aton("127.0.0.1", &(addr.sin_addr));
     addr.sin_port = htons(7788);
-
     int ret = connect(fd, (struct sockaddr*)&addr, sizeof(sockaddr));
-    
+    client = new Client(fd);
+}
+
+void recv_thread()
+{
+    PacketInfo pi;
+    string content;
+    for (;;) {
+        int ret = client->Recv();
+        bool flag = client->hasMsg(&pi, content);
+        if (flag) {
+            cout << "Recv: ";
+            cout << content << endl;
+        }
+    }
+}
+
+int main()
+{
+    init();
     Client* client = new Client(fd);
 
     PacketInfo pi;
@@ -44,10 +63,25 @@ int main()
     pi.svrid = 0;
     pi.clifd = -1;
     pi.contentLen = 5;
-    
     string content = "Login";
 
     client->Send(pi, content);
+    
+    thread recvThread(recv_thread);
+
+    for(;;)
+    {
+        cin >> content;
+        pi.time = time(NULL);
+        pi.contentLen = content.length();
+        client->Send(pi, content);
+        if (content == "Logout") {
+            close(client->fd);
+            return 0;
+        }
+    }
+
+    recvThread.join();
 
     return 0;
     

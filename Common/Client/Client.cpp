@@ -29,7 +29,7 @@ bool Client::hasMsg(PacketInfo* ppi, string &content)
     if (recvbuf.count < 4) return false;
     int packetLen = recvbuf.getIntFromHead();
 
-    if (recvbuf.count - 4 < packetLen) {
+    if (recvbuf.count < packetLen) {
         return false;
     }
     recvbuf.pop(4);
@@ -51,7 +51,7 @@ bool Client::hasMsg(PacketInfo* ppi, string &content)
 
 void Client::Send(PacketInfo pi, string content)
 {
-    int tot_len = sizeof(pi) + content.length();
+    int tot_len = sizeof(pi) + content.length() + 4;
     unsigned int tmp = htonl(tot_len); 
     sendbuf.copyIntoTail((char*)&tmp ,4);
     sendbuf.push(4);
@@ -76,7 +76,7 @@ void Client::debugPrint(char* ch, int sz)
     for (int i = 0; i < sz; i++) {
         printf("%x",*(ch+i));
     }
-    cout << "----------------" << endl;
+    cout << endl << "----------------" << endl;
 }
 
 }

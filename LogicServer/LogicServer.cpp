@@ -22,7 +22,7 @@ void LogicServer::connectGateway()
 
     gatewayAddr.sin_family = AF_INET;
     gatewayAddr.sin_port = 8898;
-    gatewayAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    inet_aton("127.0.0.1",&(gatewayAddr.sin_addr));
     
     bind(gatefd, (struct sockaddr*)&gatewayAddr, sizeof(gatewayAddr));
     
@@ -72,11 +72,13 @@ void LogicServer::Dispatch(Client* cli, PacketInfo *ppi, string content)
                 fd_map[ppi->uid] = ppi->clifd;
                 Player* player = new Player(ppi->uid);
                 pl_map[ppi->uid] = player;
+                cout << "User " << ppi->uid << "Login" << endl;
             }
             else if (content == "Logout") {
                 delete pl_map[ppi->uid];
                 pl_map.erase(ppi->uid);
                 fd_map.erase(ppi->uid);
+                cout << "User " << ppi->uid << "Logout" << endl;
             }
             // Other Msg
             break;
