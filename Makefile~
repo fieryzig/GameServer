@@ -1,5 +1,0 @@
-
-
-
-clean:
-	find ./ -name *.o *.cpp~ *.h~ *.json~ | xargs rm -f
