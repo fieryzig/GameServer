@@ -23,19 +23,23 @@ void GateServer::Run()
 	    if (events[i].data.fd == listenfd) {
 		    acceptConnect();
 	    }
+        else if (events[i].events & EPOLLERR) {
+            close(((Client*)events[i].data.ptr)->fd);
+        }
 	    else {
-		    int ret = ((Client*)events[i].data.ptr)->Recv();
+            cout << "EPOLLIN" << endl;
+            Client *cli = (Client*)events[i].data.ptr;
+            int ret = cli->Recv();
+            cout << "!!!!!!" << ret << endl;
+            PacketInfo pi; string content = "";
+            while ( cli->hasMsg(&pi,content) ) {
+                Dispatch(cli, &pi, content);
+            }
 	    }
+//            }
 	}
 
 	set<Client*>::iterator it;
-	for (it = Clients.begin(); it != Clients.end(); it++) {
-	    PacketInfo pi; string content;
-	    bool has = (*it)->hasMsg(&pi, content);
-	    if (has) {
-		    Dispatch((*it), &pi, content);
-	    }
-	}
 
 	for (it = Clients.begin(); it != Clients.end(); it++) {
 	    (*it)->SendRemain();
@@ -138,6 +142,7 @@ RS GateServer::SetConfig(const char* configFile)
     if (v.IsInt()) {
         port = v.GetInt();
     }
+//            }
     else {
         cout << "Wrong port !" << endl;
     }
@@ -180,7 +185,7 @@ void GateServer::acceptConnect()
         cout << "now Logic servers " << Logics.size() << endl; 
     }
     ev.data.ptr = client;
-    ev.events = EPOLLIN;
+    ev.events = EPOLLIN | EPOLLERR;
     epoll_ctl(epfd, EPOLL_CTL_ADD, connfd, &ev);
 }
 

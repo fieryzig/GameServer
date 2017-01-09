@@ -32,13 +32,13 @@ private:
     struct buffer_t
     {
         buffer_t():head(0),tail(0),count(0){}
-        char buffer[BUFSIZE];
+        char buffer[BUFSIZE+1];
         int head, tail, count;
         inline int remain() {
             return BUFSIZE - count;
         }
         inline char* seek(int pos) {
-            assert(pos<BUFSIZE);
+//            assert(pos<BUFSIZE);
             return (char*)(buffer+pos);
         }
         inline char* getTail() {
@@ -48,30 +48,39 @@ private:
             return seek(head);
         }
         inline int getIntFromHead() { //not check, check outside!
-            return ntohl(*(int*)seek(head));
+            char tmp[4];
+            for ( int i = 0 ; i < 4 ; i++ ) tmp[i] = buffer[(head+i)%BUFSIZE];
+            return ntohl(*(int*)tmp);
+//            return ntohl(*(int*)seek(head));
         }
         inline void push(int quantity) { //not check, check outside!
             tail = (tail + quantity) % BUFSIZE;
             count += quantity;
         }
         inline void pop(int quantity) { //not check, check outside!
+            if (head + quantity < BUFSIZE)
+                memset(buffer+head,0,sizeof(quantity));
+            else {
+                memset(buffer+head,0,sizeof(BUFSIZE-head));
+                memset(buffer,0,sizeof(quantity-BUFSIZE+head));
+            }
             head = (head + quantity) % BUFSIZE;
             count -= quantity;
         }
         inline void copyFromHead(void* dest, int sz) {
             if (head + sz < BUFSIZE)
-                memcpy(dest, buffer+head, sz);
+                memmove(dest, buffer+head, sz);
             else {
-                memcpy(dest, buffer+head, BUFSIZE - head);
-                memcpy(dest+(BUFSIZE-head), buffer, sz-BUFSIZE+head);
+                memmove(dest, buffer+head, BUFSIZE - head);
+                memmove((char*)dest+(BUFSIZE-head), buffer, sz-BUFSIZE+head);
             }
         }
         inline void copyIntoTail(const void* src, int sz) {
             if (tail+sz < BUFSIZE)
-                memcpy(getTail(), src, sz);
+                memmove(getTail(), src, sz);
             else {
-                memcpy(getTail(), src, BUFSIZE-tail);
-                memcpy(buffer, src+(BUFSIZE-tail), sz-BUFSIZE+tail);
+                memmove(getTail(), src, BUFSIZE-tail);
+                memmove(buffer, (char*)src+(BUFSIZE-tail), sz-BUFSIZE+tail);
             }
         }
     };

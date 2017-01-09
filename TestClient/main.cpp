@@ -64,9 +64,8 @@ int main()
     pi.clifd = -1;
     pi.contentLen = 5;
     string content = "Login";
-
     client->Send(pi, content);
-    
+
     thread recvThread(recv_thread);
 
     for(;;)
