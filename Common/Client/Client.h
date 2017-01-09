@@ -59,12 +59,21 @@ private:
             count -= quantity;
         }
         inline void copyFromHead(void* dest, int sz) {
-            memcpy(dest, buffer+head, sz);
+            if (head + sz < BUFSIZE)
+                memcpy(dest, buffer+head, sz);
+            else {
+                memcpy(dest, buffer+head, BUFSIZE - head);
+                memcpy(dest+(BUFSIZE-head), buffer, sz-BUFSIZE+head);
+            }
         }
         inline void copyIntoTail(const void* src, int sz) {
-            memcpy(getTail(), src, sz);
+            if (tail+sz < BUFSIZE)
+                memcpy(getTail(), src, sz);
+            else {
+                memcpy(getTail(), src, BUFSIZE-tail);
+                memcpy(buffer, src+(BUFSIZE-tail), sz-BUFSIZE+tail);
+            }
         }
-            
     };
 
     buffer_t recvbuf;

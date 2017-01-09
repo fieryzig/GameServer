@@ -16,6 +16,9 @@ public:
     ServerType type;
     string ip;
     int port;
+
+public:
+    void setFromJson(const char* configFile);
 };
 
 }
