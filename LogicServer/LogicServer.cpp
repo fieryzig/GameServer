@@ -59,7 +59,6 @@ void LogicServer::Run()
 
 void LogicServer::Dispatch(Client* cli, PacketInfo *ppi, string content)
 {
-    cout << "logic recv: " << content << endl;
     switch(ppi->srcType) {
         case ServerType::CLIENT:
         {

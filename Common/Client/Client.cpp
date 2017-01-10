@@ -52,7 +52,6 @@ bool Client::hasMsg(PacketInfo* ppi, string &content)
 int Client::Send(PacketInfo pi, string content)
 {
     int tot_len = sizeof(pi) + content.length() + 4;
-    cout << "SEND: " << tot_len << endl;
     unsigned int tmp = htonl(tot_len); 
     sendbuf.copyIntoTail((char*)&tmp ,4);
     sendbuf.push(4);

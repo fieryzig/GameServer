@@ -27,10 +27,8 @@ void GateServer::Run()
             close(((Client*)events[i].data.ptr)->fd);
         }
 	    else {
-            cout << "EPOLLIN" << endl;
             Client *cli = (Client*)events[i].data.ptr;
             int ret = cli->Recv();
-            cout << "!!!!!!" << ret << endl;
             PacketInfo pi; string content = "";
             while ( cli->hasMsg(&pi,content) ) {
                 Dispatch(cli, &pi, content);
@@ -46,7 +44,6 @@ void GateServer::Run()
 }
 
 void GateServer::Dispatch(Client* cli, PacketInfo *ppi, string content) {
-    cout << "gate recv: " << content << endl;
 	switch(ppi->srcType) {
 		case ServerType::CLIENT:
         {
@@ -65,7 +62,6 @@ void GateServer::Dispatch(Client* cli, PacketInfo *ppi, string content) {
                 Logics[pi.svrid]->Send(pi,"Login");
 		    }
 		    else {
-                cout << "DEBUG: send to logic: " << content << endl;
                 Logics[ppi->svrid]->Send(*ppi,content);
                 if (content == "Logout") {
                     Clients.erase(cli);
