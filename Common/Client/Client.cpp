@@ -17,14 +17,10 @@ namespace fieryzig{
 
 int Client::Recv() 
 {
-    if (recvbuf.remain() < 4) return 0;
-//    cout << "RECV: " << recvbuf.head << " " << recvbuf.tail << " " << recvbuf.remain() << endl;
-//    int ret = ::read(fd, recvbuf.getTail(), recvbuf.remain());
+//    if (recvbuf.remain() < 4) return 0;
     int ret = ::read(fd, recvbuf.getTail(), min(recvbuf.remain(),BUFSIZE-recvbuf.tail));
-    debugPrint(recvbuf.buffer,4096);
     if (ret == -1) return ret;
     recvbuf.push(ret);
-    cout << "#############" << recvbuf.tail << endl;
     return ret;
 }
 
@@ -37,7 +33,7 @@ bool Client::hasMsg(PacketInfo* ppi, string &content)
         return false;
     }
     recvbuf.pop(4);
-    cout << packetLen << endl;
+    cout << "RECV PacketLen: " << packetLen << endl;
 
     int pi_size = sizeof(PacketInfo);
     recvbuf.copyFromHead(ppi, pi_size);
@@ -46,7 +42,6 @@ bool Client::hasMsg(PacketInfo* ppi, string &content)
     int contentLen = ppi->contentLen;
     char conBuf[contentLen];
     recvbuf.copyFromHead(conBuf, contentLen);
-//    debugPrint(conBuf, contentLen);
     conBuf[contentLen] = '\0';
     content = conBuf;
     
@@ -54,9 +49,10 @@ bool Client::hasMsg(PacketInfo* ppi, string &content)
     return true;
 }
 
-void Client::Send(PacketInfo pi, string content)
+int Client::Send(PacketInfo pi, string content)
 {
     int tot_len = sizeof(pi) + content.length() + 4;
+    cout << "SEND: " << tot_len << endl;
     unsigned int tmp = htonl(tot_len); 
     sendbuf.copyIntoTail((char*)&tmp ,4);
     sendbuf.push(4);
@@ -64,16 +60,22 @@ void Client::Send(PacketInfo pi, string content)
     sendbuf.push(sizeof(pi));
     sendbuf.copyIntoTail(content.c_str(), content.length());
     sendbuf.push(content.length());
-//    cout << "SEND: " << sendbuf.head << " " << sendbuf.tail << endl;
-    int ret = ::write(fd, sendbuf.getHead(), sendbuf.count);
+
+    int ret = ::write(fd, sendbuf.getHead(), min(sendbuf.count, BUFSIZE-sendbuf.head));
+    if (ret == -1) return -1;
     sendbuf.pop(ret);
+    return ret;
+}
+
+bool Client::hasRemain()
+{
+    return sendbuf.count > 0;
 }
 
 void Client::SendRemain()
 {
     if (sendbuf.count == 0) return;
-//    int ret = ::write(fd, sendbuf.getHead(), sendbuf.count);
-    int ret = ::write(fd, sendbuf.getHead(), BUFSIZE - sendbuf.head);
+    int ret = ::write(fd, sendbuf.getHead(), min(sendbuf.count,BUFSIZE - sendbuf.head));
     sendbuf.pop(ret);
 }
 
@@ -81,7 +83,7 @@ void Client::debugPrint(char* ch, int sz)
 {
     cout << "+++++++" << sz << "+++++++" << endl;
     for (int i = 0; i < sz; i++) {
-        printf("%x",*(ch+i));
+        printf("%02x",*(ch+i)&0xFF);
         if ( i % 64 == 63 ) puts("");
     }
     cout << endl << "----------------" << endl;

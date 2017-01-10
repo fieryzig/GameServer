@@ -24,8 +24,9 @@ public:
     Client(int fd):fd(fd){}
     int Recv();
     bool hasMsg(PacketInfo* ppi, string &content);
-    void Send(PacketInfo pi, string content);
+    int Send(PacketInfo pi, string content);
     void SendRemain();
+    bool hasRemain();
 
 private:
 
@@ -38,7 +39,7 @@ private:
             return BUFSIZE - count;
         }
         inline char* seek(int pos) {
-//            assert(pos<BUFSIZE);
+            assert(pos<BUFSIZE);
             return (char*)(buffer+pos);
         }
         inline char* getTail() {
@@ -51,24 +52,17 @@ private:
             char tmp[4];
             for ( int i = 0 ; i < 4 ; i++ ) tmp[i] = buffer[(head+i)%BUFSIZE];
             return ntohl(*(int*)tmp);
-//            return ntohl(*(int*)seek(head));
         }
         inline void push(int quantity) { //not check, check outside!
             tail = (tail + quantity) % BUFSIZE;
             count += quantity;
         }
         inline void pop(int quantity) { //not check, check outside!
-            if (head + quantity < BUFSIZE)
-                memset(buffer+head,0,sizeof(quantity));
-            else {
-                memset(buffer+head,0,sizeof(BUFSIZE-head));
-                memset(buffer,0,sizeof(quantity-BUFSIZE+head));
-            }
             head = (head + quantity) % BUFSIZE;
             count -= quantity;
         }
         inline void copyFromHead(void* dest, int sz) {
-            if (head + sz < BUFSIZE)
+            if (head + sz <= BUFSIZE)
                 memmove(dest, buffer+head, sz);
             else {
                 memmove(dest, buffer+head, BUFSIZE - head);
@@ -76,7 +70,7 @@ private:
             }
         }
         inline void copyIntoTail(const void* src, int sz) {
-            if (tail+sz < BUFSIZE)
+            if (tail+sz <= BUFSIZE)
                 memmove(getTail(), src, sz);
             else {
                 memmove(getTail(), src, BUFSIZE-tail);

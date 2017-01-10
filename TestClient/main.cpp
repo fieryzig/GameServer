@@ -66,21 +66,22 @@ int main()
     string content = "Login";
     client->Send(pi, content);
 
-    thread recvThread(recv_thread);
+//    thread recvThread(recv_thread);
 
     for(;;)
     {
         cin >> content;
         pi.time = time(NULL);
         pi.contentLen = content.length();
-        client->Send(pi, content);
+        int ret = client->Send(pi, content);
+        while (client->hasRemain()) client->SendRemain();
         if (content == "Logout") {
             close(client->fd);
             return 0;
         }
     }
 
-    recvThread.join();
+//    recvThread.join();
 
     return 0;
     

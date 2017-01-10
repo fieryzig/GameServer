@@ -36,7 +36,6 @@ void GateServer::Run()
                 Dispatch(cli, &pi, content);
             }
 	    }
-//            }
 	}
 
 	set<Client*>::iterator it;
